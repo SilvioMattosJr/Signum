@@ -1,4 +1,7 @@
 import { Check, AlertCircle, X, GripVertical } from 'lucide-react';
+import OptimizedInput from './OptimizedInput.jsx';
+
+export { OptimizedInput };
 
 /* ── CheckRow ─────────────────────────────────────────────────── */
 export function CheckRow({ checked, onChange, label, required, invalid }) {

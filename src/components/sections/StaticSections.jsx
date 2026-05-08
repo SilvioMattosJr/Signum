@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { UserCheck, Users, CheckCircle2, FileText, Settings2 } from 'lucide-react'
-import { useApp } from '../../context/AppContext.jsx'
+import { useAppDispatch } from '../../context/AppContext.jsx'
 import { useValidation } from '../../hooks/useValidation.js'
-import { CheckRow, Field, SecCard } from '../ui/index.jsx'
+import { CheckRow, Field, SecCard, OptimizedInput } from '../ui/index.jsx'
 import CustomFieldRenderer from './CustomFieldRenderer.jsx'
 import CustomFieldModal from '../modals/CustomFieldModal.jsx'
 
@@ -23,27 +23,27 @@ function AddFieldButton({ section }) {
   )
 }
 
-export function ArrivalSection({ dragHandleProps }) {
-  const { state, set, toggle } = useApp()
+export const ArrivalSection = memo(function ArrivalSection({ dragHandleProps, companyName, serviceDate, openMilvus, startService }) {
+  const { set, toggle } = useAppDispatch()
   const { v } = useValidation()
   return (
     <SecCard icon={<UserCheck size={17}/>} title="Ao Chegar no Cliente" dragHandleProps={dragHandleProps}>
       <Field label="Nome da empresa" required error={v.errors.companyName && 'Campo obrigatório'}>
-        <input className={`input ${v.errors.companyName?'err':''}`} type="text"
+        <OptimizedInput className={`input ${v.errors.companyName?'err':''}`}
           placeholder="Digite o nome da empresa"
-          value={state.companyName} onChange={e => set('companyName', e.target.value)}/>
+          value={companyName} onChange={val => set('companyName', val)}/>
       </Field>
 
       <Field label="Data do atendimento">
         <input className="input" type="date"
-          value={state.serviceDate || new Date().toISOString().split('T')[0]}
+          value={serviceDate || new Date().toISOString().split('T')[0]}
           onChange={e => set('serviceDate', e.target.value)}/>
       </Field>
 
       <div style={{display:'flex', flexDirection:'column', gap:3}}>
-        <CheckRow checked={state.openMilvus} onChange={() => toggle('openMilvus')}
+        <CheckRow checked={openMilvus} onChange={() => toggle('openMilvus')}
           label="Abrir chamado no Milvus" required invalid={!!v.errors.openMilvus}/>
-        <CheckRow checked={state.startService} onChange={() => toggle('startService')}
+        <CheckRow checked={startService} onChange={() => toggle('startService')}
           label="Iniciar atendimento" required invalid={!!v.errors.startService}/>
       </div>
 
@@ -51,44 +51,45 @@ export function ArrivalSection({ dragHandleProps }) {
       <AddFieldButton section="arrival"/>
     </SecCard>
   )
-}
+})
 
-export function TrainingSection({ dragHandleProps }) {
-  const { state, toggle } = useApp()
+export const TrainingSection = memo(function TrainingSection({ dragHandleProps, trainHelpdesk, trainMaintenance, trainUpdates }) {
+  const { toggle } = useAppDispatch()
   const { v } = useValidation()
   return (
     <SecCard icon={<Users size={17}/>} title="Treinamento" dragHandleProps={dragHandleProps}>
       <div style={{display:'flex', flexDirection:'column', gap:3}}>
-        <CheckRow checked={state.trainHelpdesk} onChange={() => toggle('trainHelpdesk')}
+        <CheckRow checked={trainHelpdesk} onChange={() => toggle('trainHelpdesk')}
           label="Demonstrar como abrir chamado via Client Core Helpdesk" required invalid={!!v.errors.trainHelpdesk}/>
-        <CheckRow checked={state.trainMaintenance} onChange={() => toggle('trainMaintenance')}
+        <CheckRow checked={trainMaintenance} onChange={() => toggle('trainMaintenance')}
           label="Explicar procedimentos básicos de manutenção" required invalid={!!v.errors.trainMaintenance}/>
-        <CheckRow checked={state.trainUpdates} onChange={() => toggle('trainUpdates')}
+        <CheckRow checked={trainUpdates} onChange={() => toggle('trainUpdates')}
           label="Orientar sobre: Sempre manter o sistema atualizado" required invalid={!!v.errors.trainUpdates}/>
       </div>
       <CustomFieldRenderer section="training"/>
       <AddFieldButton section="training"/>
     </SecCard>
   )
-}
+})
 
-export function ObservationsSection({ dragHandleProps }) {
-  const { state, set } = useApp()
+export const ObservationsSection = memo(function ObservationsSection({ dragHandleProps, observations }) {
+  const { set } = useAppDispatch()
   return (
     <SecCard icon={<FileText size={17}/>} title="Observações Técnicas" dragHandleProps={dragHandleProps}>
       <Field label="Registro de observações e recomendações">
-        <textarea className="textarea"
+        <OptimizedInput isTextArea className="textarea"
           placeholder="Registre observações técnicas gerais, recomendações e notas sobre o atendimento..."
-          value={state.observations}
-          onChange={e => set('observations', e.target.value)}
+          value={observations}
+          onChange={val => set('observations', val)}
           style={{minHeight:100}}/>
       </Field>
     </SecCard>
   )
-}
+})
 
-export function ClosureSection({ dragHandleProps }) {
-  const { state, toggle } = useApp()
+export const ClosureSection = memo(function ClosureSection({ dragHandleProps, writeReport, collectClientSig, collectTechSig, closeCall, checkSatisfaction }) {
+  const { toggle } = useAppDispatch()
+  const data = { writeReport, collectClientSig, collectTechSig, closeCall, checkSatisfaction }
   return (
     <SecCard icon={<CheckCircle2 size={17}/>} title="Encerramento" dragHandleProps={dragHandleProps}>
       <div style={{display:'flex', flexDirection:'column', gap:3}}>
@@ -99,11 +100,11 @@ export function ClosureSection({ dragHandleProps }) {
           ['closeCall',        'Encerrar chamado na frente do responsável'],
           ['checkSatisfaction','Verificar satisfação do cliente'],
         ].map(([k, label]) => (
-          <CheckRow key={k} checked={state[k]} onChange={() => toggle(k)} label={label}/>
+          <CheckRow key={k} checked={data[k]} onChange={() => toggle(k)} label={label}/>
         ))}
       </div>
       <CustomFieldRenderer section="closure"/>
       <AddFieldButton section="closure"/>
     </SecCard>
   )
-}
+})

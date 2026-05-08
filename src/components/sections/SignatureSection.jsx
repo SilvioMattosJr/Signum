@@ -1,10 +1,11 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { PenLine, Trash2, Check, X, User, Plus } from 'lucide-react'
-import { useApp } from '../../context/AppContext.jsx'
+import { useAppState, useAppDispatch } from '../../context/AppContext.jsx'
 import { useValidation } from '../../hooks/useValidation.js'
 import { useThemeCtx } from '../../context/ThemeContext.jsx'
-import { Field, SecCard } from '../ui/index.jsx'
+import { Field, SecCard, OptimizedInput } from '../ui/index.jsx'
+import { memo } from 'react'
 
 // ── Signature canvas modal ────────────────────────────────────────────────────
 function SigCanvas({ title, onSave, onClose }) {
@@ -71,8 +72,8 @@ function SigCanvas({ title, onSave, onClose }) {
 }
 
 // ── Single technician column ──────────────────────────────────────────────────
-function TechColumn({ tech, index, canDelete }) {
-  const { updTech, delTech } = useApp()
+const TechColumn = memo(function TechColumn({ tech, index, canDelete }) {
+  const { updTech, delTech } = useAppDispatch()
   const { v } = useValidation()
   const [open, setOpen] = useState(false)
 
@@ -124,10 +125,10 @@ function TechColumn({ tech, index, canDelete }) {
       </div>
 
       <Field label={`Nome do Técnico ${index+1}`} required error={nameErr&&'Campo obrigatório'}>
-        <input className={`input ${nameErr?'err':''}`} type="text"
+        <OptimizedInput className={`input ${nameErr?'err':''}`}
           placeholder="Nome completo do técnico"
           value={tech.name}
-          onChange={e=>updTech(tech.id,{name:e.target.value})}/>
+          onChange={val=>updTech(tech.id,{name:val})}/>
       </Field>
 
       {open && (
@@ -138,11 +139,11 @@ function TechColumn({ tech, index, canDelete }) {
       )}
     </div>
   )
-}
+})
 
 // ── Client signature column ───────────────────────────────────────────────────
-function ClientColumn() {
-  const { state, set, setSig } = useApp()
+const ClientColumn = memo(function ClientColumn({ clientName, clientSignature }) {
+  const { set, setSig } = useAppDispatch()
   const { v } = useValidation()
   const [open, setOpen] = useState(false)
   const nameErr = !!v.errors.clientName
@@ -157,32 +158,32 @@ function ClientColumn() {
       <div className="sig-preview"
         style={{borderColor:sigErr?'rgba(255,77,109,.42)':undefined}}
         onClick={()=>setOpen(true)}>
-        {state.clientSignature
+        {clientSignature
           ? <div style={{
               width: '100%',
               height: 80,
               backgroundColor: 'var(--cyan)',
-              WebkitMask: `url("${state.clientSignature}") center/contain no-repeat`,
-              mask: `url("${state.clientSignature}") center/contain no-repeat`,
+              WebkitMask: `url("${clientSignature}") center/contain no-repeat`,
+              mask: `url("${clientSignature}") center/contain no-repeat`,
             }} />
           : <span style={{fontSize:'.75rem',color:'var(--t3)'}}>Clique para assinar</span>}
       </div>
       {sigErr && <div className="err-msg" style={{marginTop:-8}}>Assinatura obrigatória</div>}
       <div style={{display:'flex',gap:7}}>
         <button className="btn btn-primary btn-sm" onClick={()=>setOpen(true)} style={{flex:1,justifyContent:'center'}}>
-          <PenLine size={12}/>{state.clientSignature?'Reassinar':'Assinar'}
+          <PenLine size={12}/>{clientSignature?'Reassinar':'Assinar'}
         </button>
-        {state.clientSignature && (
+        {clientSignature && (
           <button className="btn btn-danger btn-icon btn-sm" onClick={()=>setSig('clientSignature',null)}>
             <Trash2 size={12}/>
           </button>
         )}
       </div>
       <Field label="Nome do responsável" required error={nameErr&&'Campo obrigatório'}>
-        <input className={`input ${nameErr?'err':''}`} type="text"
+        <OptimizedInput className={`input ${nameErr?'err':''}`}
           placeholder="Nome completo do responsável"
-          value={state.clientName}
-          onChange={e=>set('clientName',e.target.value)}/>
+          value={clientName}
+          onChange={val=>set('clientName',val)}/>
       </Field>
       {open && (
         <SigCanvas
@@ -192,17 +193,18 @@ function ClientColumn() {
       )}
     </div>
   )
-}
+})
 
 // ── Main section ─────────────────────────────────────────────────────────────
-export default function SignatureSection({ dragHandleProps }) {
-  const { state, addTech } = useApp()
+const SignatureSection = memo(function SignatureSection({ dragHandleProps }) {
+  const state = useAppState()
+  const { addTech } = useAppDispatch()
   const techs = state.technicians || []
 
   return (
     <SecCard icon={<PenLine size={17}/>} title="Assinaturas" dragHandleProps={dragHandleProps}>
       <div style={{display:'flex',gap:14,flexWrap:'wrap',alignItems:'flex-start'}}>
-        <ClientColumn/>
+        <ClientColumn clientName={state.clientName} clientSignature={state.clientSignature}/>
         {techs.map((t,i) => (
           <TechColumn key={t.id} tech={t} index={i} canDelete={techs.length>1}/>
         ))}
@@ -217,4 +219,6 @@ export default function SignatureSection({ dragHandleProps }) {
       </button>
     </SecCard>
   )
-}
+})
+
+export default SignatureSection

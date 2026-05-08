@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Info, FileText, Plus, Layout, MonitorSmartphone } from 'lucide-react'
-import { AppProvider, useApp } from './context/AppContext.jsx'
+import { AppProvider, useAppState, useAppDispatch } from './context/AppContext.jsx'
 import { ThemeProvider, useThemeCtx } from './context/ThemeContext.jsx'
 import { useValidation } from './hooks/useValidation.js'
 import { useBreakpoint } from './hooks/useBreakpoint.js'
@@ -31,10 +31,11 @@ import SortableWrapper    from './components/ui/SortableWrapper.jsx'
 import './styles/global.css'
 
 function InnerApp() {
+  const state = useAppState()
   const {
-    state, addMachine, addInfra, newReport, loadShare,
+    addMachine, addInfra, newReport, loadShare,
     addCustomSection, setSectionOrder,
-  } = useApp()
+  } = useAppDispatch()
   const { v }            = useValidation()
   const { isDark, primaryColor } = useThemeCtx()
   const { useBottomNav, isMobile } = useBreakpoint()
@@ -161,11 +162,42 @@ function InnerApp() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSectionDragEnd}>
           <SortableContext items={state.sectionOrder} strategy={verticalListSortingStrategy}>
             {state.sectionOrder.map(id => {
-              if (id === 'arrival') return <SortableWrapper key={id} id={id}><ArrivalSection/></SortableWrapper>
-              if (id === 'training') return <SortableWrapper key={id} id={id}><TrainingSection/></SortableWrapper>
-              if (id === 'observations') return <SortableWrapper key={id} id={id}><ObservationsSection/></SortableWrapper>
+              if (id === 'arrival') return (
+                <SortableWrapper key={id} id={id}>
+                  <ArrivalSection 
+                    companyName={state.companyName} 
+                    serviceDate={state.serviceDate} 
+                    openMilvus={state.openMilvus} 
+                    startService={state.startService} 
+                  />
+                </SortableWrapper>
+              )
+              if (id === 'training') return (
+                <SortableWrapper key={id} id={id}>
+                  <TrainingSection 
+                    trainHelpdesk={state.trainHelpdesk} 
+                    trainMaintenance={state.trainMaintenance} 
+                    trainUpdates={state.trainUpdates} 
+                  />
+                </SortableWrapper>
+              )
+              if (id === 'observations') return (
+                <SortableWrapper key={id} id={id}>
+                  <ObservationsSection observations={state.observations} />
+                </SortableWrapper>
+              )
               if (id === 'signatures') return <SortableWrapper key={id} id={id}><SignatureSection/></SortableWrapper>
-              if (id === 'closure') return <SortableWrapper key={id} id={id}><ClosureSection/></SortableWrapper>
+              if (id === 'closure') return (
+                <SortableWrapper key={id} id={id}>
+                  <ClosureSection 
+                    writeReport={state.writeReport} 
+                    collectClientSig={state.collectClientSig} 
+                    collectTechSig={state.collectTechSig} 
+                    closeCall={state.closeCall} 
+                    checkSatisfaction={state.checkSatisfaction} 
+                  />
+                </SortableWrapper>
+              )
               
               if (id.startsWith('m-')) {
                 const m = state.machines.find(x => x.id === id)

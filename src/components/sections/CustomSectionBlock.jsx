@@ -7,9 +7,11 @@ import {
 } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useApp } from '../../context/AppContext.jsx'
+import { useAppDispatch } from '../../context/AppContext.jsx'
+import { memo } from 'react'
 import CustomFieldModal from '../modals/CustomFieldModal.jsx'
 import { isFieldVisible } from '../../utils/conditionEngine.js'
+import OptimizedInput from '../ui/OptimizedInput.jsx'
 
 
 const ICON_OPTIONS = [
@@ -24,7 +26,7 @@ const ICON_MAP = {
   Smartphone, Globe, Lock, Package, PenTool
 }
 
-function CustomFieldValue({ field, value, onChange }) {
+const CustomFieldValue = memo(function CustomFieldValue({ field, value, onChange }) {
   if (field.type === 'checkbox') {
     return (
       <div
@@ -65,8 +67,8 @@ function CustomFieldValue({ field, value, onChange }) {
     return (
       <div className="form-group">
         <label className="label">{field.label}{field.required && <span className="req">*</span>}</label>
-        <textarea className="textarea" placeholder={field.placeholder || ''}
-          value={value || ''} onChange={e => onChange(e.target.value)} style={{ minHeight: 72 }} />
+        <OptimizedInput isTextArea className="textarea" placeholder={field.placeholder || ''}
+          value={value || ''} onChange={val => onChange(val)} style={{ minHeight: 72 }} />
       </div>
     )
   }
@@ -109,15 +111,15 @@ function CustomFieldValue({ field, value, onChange }) {
   return (
     <div className="form-group">
       <label className="label">{field.label}{field.required && <span className="req">*</span>}</label>
-      <input type={field.type === 'number' ? 'number' : 'text'} className="input"
+      <OptimizedInput type={field.type === 'number' ? 'number' : 'text'} className="input"
         placeholder={field.placeholder || `Digite ${field.label.toLowerCase()}…`}
-        value={value || ''} onChange={e => onChange(e.target.value)} />
+        value={value || ''} onChange={val => onChange(val)} />
     </div>
   )
-}
+})
 
-export default function CustomSectionBlock({ section }) {
-  const { updCustomSection, delCustomSection, setSectionValue } = useApp()
+const CustomSectionBlock = memo(function CustomSectionBlock({ section }) {
+  const { updCustomSection, delCustomSection, setSectionValue } = useAppDispatch()
   const [cfOpen, setCfOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [editTitle, setEditTitle] = useState(false)
@@ -320,4 +322,6 @@ export default function CustomSectionBlock({ section }) {
       )}
     </>
   )
-}
+})
+
+export default CustomSectionBlock

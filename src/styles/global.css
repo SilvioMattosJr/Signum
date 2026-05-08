@@ -24,6 +24,10 @@
   --glass-border: rgba(255, 255, 255, 0.09);
   --glass-blur: blur(22px) saturate(180%);
 
+  @media (max-width: 768px) {
+    --glass-blur: blur(10px) saturate(160%);
+  }
+
   /* Text */
   --t1: rgba(255, 255, 255, 0.93);
   --t2: rgba(255, 255, 255, 0.58);
@@ -93,6 +97,10 @@
   --glass-3: rgba(0, 136, 204, 0.05);
   --glass-border: rgba(15, 23, 42, 0.08);
   --glass-blur: blur(18px) saturate(180%);
+
+  @media (max-width: 768px) {
+    --glass-blur: blur(8px) saturate(160%);
+  }
 
   /* Text */
   --t1: #0f172a;
@@ -263,6 +271,7 @@ body::after {
   border: 1px solid var(--glass-border);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-card);
+  will-change: transform, box-shadow;
   overflow: hidden;
   transition: 
     border-color var(--t-base) var(--ease), 

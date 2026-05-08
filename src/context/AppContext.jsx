@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useCallback, useEffect, useRef } from 'react'
+import { createContext, useContext, useReducer, useCallback, useEffect, useRef, useMemo } from 'react'
 import { saveState, loadState } from '../utils/storage.js'
 import { A } from './actions.js'
 export { A }
@@ -199,7 +199,8 @@ function reducer(state, {type:t, payload:p={}}) {
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
-const Ctx = createContext(null)
+const AppStateCtx    = createContext(null)
+const AppDispatchCtx = createContext(null)
 
 export function AppProvider({children}) {
   const [state, dispatch] = useReducer(reducer, initialState)
@@ -290,28 +291,48 @@ export function AppProvider({children}) {
   const loadShare       = useCallback(data=> dispatch({type:A.LOAD_SHARE,payload:{data}}), [])
   const loadTemplate    = useCallback(tmpl=> dispatch({type:A.LOAD_TEMPLATE,payload:{tmpl}}), [])
 
+  const actions = useMemo(() => ({
+    set, toggle, addMachine, updMachine, delMachine,
+    addInfra, updInfra, delInfra, addPhoto, updPhoto, delPhoto, reorderPhotos,
+    addTech, updTech, delTech, addCustomField, updCustomField, delCustomField,
+    setCustomValue, setItemCustomValue, addCustomSection, updCustomSection,
+    delCustomSection, reorderSections, setSectionOrder, setSectionValue,
+    setSig, setTemplate, setMargins, saveToHistory, loadFromHistory,
+    deleteHistory, newReport, loadShare, loadTemplate, dispatch
+  }), [
+    set, toggle, addMachine, updMachine, delMachine,
+    addInfra, updInfra, delInfra, addPhoto, updPhoto, delPhoto, reorderPhotos,
+    addTech, updTech, delTech, addCustomField, updCustomField, delCustomField,
+    setCustomValue, setItemCustomValue, addCustomSection, updCustomSection,
+    delCustomSection, reorderSections, setSectionOrder, setSectionValue,
+    setSig, setTemplate, setMargins, saveToHistory, loadFromHistory,
+    deleteHistory, newReport, loadShare, loadTemplate
+  ])
+
   return (
-    <Ctx.Provider value={{
-      state, dispatch, set, toggle,
-      addMachine, updMachine, delMachine,
-      addInfra, updInfra, delInfra,
-      addPhoto, updPhoto, delPhoto, reorderPhotos,
-      addTech, updTech, delTech,
-      addCustomField, updCustomField, delCustomField,
-      setCustomValue, setItemCustomValue,
-      addCustomSection, updCustomSection, delCustomSection,
-      reorderSections, setSectionOrder, setSectionValue,
-      setSig, setTemplate, setMargins,
-      saveToHistory, loadFromHistory, deleteHistory,
-      newReport, loadShare, loadTemplate,
-    }}>
-      {children}
-    </Ctx.Provider>
+    <AppStateCtx.Provider value={state}>
+      <AppDispatchCtx.Provider value={actions}>
+        {children}
+      </AppDispatchCtx.Provider>
+    </AppStateCtx.Provider>
   )
 }
 
-export const useApp = () => {
-  const c = useContext(Ctx)
-  if (!c) throw new Error('useApp outside AppProvider')
+export const useAppState = () => {
+  const c = useContext(AppStateCtx)
+  if (!c) throw new Error('useAppState outside AppProvider')
   return c
+}
+
+export const useAppDispatch = () => {
+  const c = useContext(AppDispatchCtx)
+  if (!c) throw new Error('useAppDispatch outside AppProvider')
+  return c
+}
+
+// Keep useApp for backward compatibility but encourage splitting
+export const useApp = () => {
+  const state = useAppState()
+  const dispatch = useAppDispatch()
+  return { state, ...dispatch }
 }

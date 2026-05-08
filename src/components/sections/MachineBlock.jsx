@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { MonitorSmartphone, Settings, Plus, Settings2 } from 'lucide-react'
-import { useApp } from '../../context/AppContext.jsx'
+import { useAppDispatch } from '../../context/AppContext.jsx'
 import { useValidation } from '../../hooks/useValidation.js'
-import { CheckRow, Field, RadioGroup, SecCard, SubTitle } from '../ui/index.jsx'
+import { CheckRow, Field, RadioGroup, SecCard, SubTitle, OptimizedInput } from '../ui/index.jsx'
 import SortablePhotoList from './SortablePhotoList.jsx'
 import CustomFieldRenderer from './CustomFieldRenderer.jsx'
 import CustomFieldModal from '../modals/CustomFieldModal.jsx'
@@ -18,8 +18,8 @@ const PROCESSES = [
   {k:'runAida',       l:'Passar o AIDA'},
 ]
 
-export default function MachineBlock({ machine, dragHandleProps }) {
-  const { updMachine, delMachine, addPhoto } = useApp()
+const MachineBlock = memo(function MachineBlock({ machine, dragHandleProps }) {
+  const { updMachine, delMachine, addPhoto } = useAppDispatch()
   const { v } = useValidation()
   const [cfOpen, setCfOpen] = useState(false)
   const id = machine.id
@@ -33,24 +33,24 @@ export default function MachineBlock({ machine, dragHandleProps }) {
         dragHandleProps={dragHandleProps}>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:11, className:"machine-grid-2"}}>
           <Field label="Nome da máquina" required error={e('name')} style={{gridColumn:'1/-1'}}>
-            <input className={`input ${e('name')?'err':''}`} type="text" placeholder="Ex: Desktop Recepção"
-              value={machine.name} onChange={ev=>u({name:ev.target.value})}/>
+            <OptimizedInput className={`input ${e('name')?'err':''}`} placeholder="Ex: Desktop Recepção"
+              value={machine.name} onChange={val=>u({name:val})}/>
           </Field>
           <Field label="Sistema operacional" required error={e('os')}>
-            <input className={`input ${e('os')?'err':''}`} type="text" placeholder="Ex: Windows 11 Pro"
-              value={machine.os} onChange={ev=>u({os:ev.target.value})}/>
+            <OptimizedInput className={`input ${e('os')?'err':''}`} placeholder="Ex: Windows 11 Pro"
+              value={machine.os} onChange={val=>u({os:val})}/>
           </Field>
           <Field label="Armazenamento" required error={e('storage')}>
-            <input className={`input ${e('storage')?'err':''}`} type="text" placeholder="Ex: SSD 480GB"
-              value={machine.storage} onChange={ev=>u({storage:ev.target.value})}/>
+            <OptimizedInput className={`input ${e('storage')?'err':''}`} placeholder="Ex: SSD 480GB"
+              value={machine.storage} onChange={val=>u({storage:val})}/>
           </Field>
           <Field label="Memória RAM" required error={e('ram')}>
-            <input className={`input ${e('ram')?'err':''}`} type="text" placeholder="Ex: 8GB DDR4"
-              value={machine.ram} onChange={ev=>u({ram:ev.target.value})}/>
+            <OptimizedInput className={`input ${e('ram')?'err':''}`} placeholder="Ex: 8GB DDR4"
+              value={machine.ram} onChange={val=>u({ram:val})}/>
           </Field>
           <Field label="ID do AnyDesk" required error={e('anydesk')}>
-            <input className={`input ${e('anydesk')?'err':''}`} type="text" placeholder="Ex: 123 456 789"
-              value={machine.anydesk} onChange={ev=>u({anydesk:ev.target.value})}/>
+            <OptimizedInput className={`input ${e('anydesk')?'err':''}`} placeholder="Ex: 123 456 789"
+              value={machine.anydesk} onChange={val=>u({anydesk:val})}/>
           </Field>
         </div>
 
@@ -78,9 +78,9 @@ export default function MachineBlock({ machine, dragHandleProps }) {
         </div>
 
         <Field label="Observações da máquina" required error={e('obs')}>
-          <textarea className={`textarea ${e('obs')?'err':''}`}
+          <OptimizedInput isTextArea className={`textarea ${e('obs')?'err':''}`}
             placeholder="Registre observações técnicas específicas desta máquina…"
-            value={machine.observations} onChange={ev=>u({observations:ev.target.value})}/>
+            value={machine.observations} onChange={val=>u({observations:val})}/>
         </Field>
 
         {/* Custom fields for machine section */}
@@ -103,4 +103,6 @@ export default function MachineBlock({ machine, dragHandleProps }) {
       {cfOpen && <CustomFieldModal section="machine" onClose={()=>setCfOpen(false)}/>}
     </>
   )
-}
+})
+
+export default MachineBlock

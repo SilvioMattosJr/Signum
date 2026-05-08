@@ -1,14 +1,14 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { Camera, Plus, Settings2 } from 'lucide-react'
-import { useApp } from '../../context/AppContext.jsx'
+import { useAppDispatch } from '../../context/AppContext.jsx'
 import { useValidation } from '../../hooks/useValidation.js'
-import { Field, SecCard, SubTitle } from '../ui/index.jsx'
+import { Field, SecCard, SubTitle, OptimizedInput } from '../ui/index.jsx'
 import SortablePhotoList from './SortablePhotoList.jsx'
 import CustomFieldRenderer from './CustomFieldRenderer.jsx'
 import CustomFieldModal from '../modals/CustomFieldModal.jsx'
 
-export default function InfraBlock({ infra, dragHandleProps }) {
-  const { updInfra, delInfra, addPhoto } = useApp()
+const InfraBlock = memo(function InfraBlock({ infra, dragHandleProps }) {
+  const { updInfra, delInfra, addPhoto } = useAppDispatch()
   const { v } = useValidation()
   const [cfOpen, setCfOpen] = useState(false)
   const id = infra.id
@@ -21,19 +21,19 @@ export default function InfraBlock({ infra, dragHandleProps }) {
         onRemove={()=>window.confirm(`Remover Infraestrutura ${infra.number}?`)&&delInfra(id)}
         dragHandleProps={dragHandleProps}>
         <Field label="Descrição do item" required error={e('desc')}>
-          <input className={`input ${e('desc')?'err':''}`} type="text"
+          <OptimizedInput className={`input ${e('desc')?'err':''}`}
             placeholder="Ex: Roteador, Câmera, Modem, Switch…"
-            value={infra.description} onChange={ev=>u({description:ev.target.value})}/>
+            value={infra.description} onChange={val=>u({description:val})}/>
         </Field>
         <Field label="Localização" required error={e('loc')}>
-          <input className={`input ${e('loc')?'err':''}`} type="text"
+          <OptimizedInput className={`input ${e('loc')?'err':''}`}
             placeholder="Onde está instalado este item"
-            value={infra.location} onChange={ev=>u({location:ev.target.value})}/>
+            value={infra.location} onChange={val=>u({location:val})}/>
         </Field>
         <Field label="Observações" required error={e('obs')}>
-          <textarea className={`textarea ${e('obs')?'err':''}`}
+          <OptimizedInput isTextArea className={`textarea ${e('obs')?'err':''}`}
             placeholder="Anotações sobre este item de infraestrutura…"
-            value={infra.observations} onChange={ev=>u({observations:ev.target.value})}/>
+            value={infra.observations} onChange={val=>u({observations:val})}/>
         </Field>
 
         <CustomFieldRenderer section="infra" itemType="infra" itemId={id}/>
@@ -54,4 +54,6 @@ export default function InfraBlock({ infra, dragHandleProps }) {
       {cfOpen && <CustomFieldModal section="infra" onClose={()=>setCfOpen(false)}/>}
     </>
   )
-}
+})
+
+export default InfraBlock
