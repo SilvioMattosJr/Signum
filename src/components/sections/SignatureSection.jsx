@@ -11,59 +11,114 @@ import { memo } from 'react'
 function SigCanvas({ title, onSave, onClose }) {
   const canvasRef = useRef(null)
   const drawing   = useRef(false)
-
+  const lastPos   = useRef({ x: 0, y: 0 })
+  const rafRef    = useRef(null)
   const { primaryColor } = useThemeCtx()
 
+  // Setup canvas size and context
   useEffect(() => {
     const canvas = canvasRef.current
-    const ctx    = canvas.getContext('2d')
-    const dpr    = Math.max(window.devicePixelRatio || 1, 3)
-    canvas.width  = canvas.offsetWidth  * dpr
-    canvas.height = canvas.offsetHeight * dpr
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const dpr = window.devicePixelRatio || 1
+    const rect = canvas.getBoundingClientRect()
+    
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
     ctx.scale(dpr, dpr)
+    
     ctx.strokeStyle = primaryColor || '#00d4ff'
-    ctx.lineWidth   = 2.4
-    ctx.lineCap     = 'round'
-    ctx.lineJoin    = 'round'
+    ctx.lineWidth = 2.4
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+
+    // Use native listeners to ensure non-passive behavior for preventDefault
+    const getPos = (e) => {
+      const r = canvas.getBoundingClientRect()
+      const src = e.touches ? e.touches[0] : e
+      return { x: src.clientX - r.left, y: src.clientY - r.top }
+    }
+
+    const start = (e) => {
+      if (e.cancelable) e.preventDefault()
+      drawing.current = true
+      const p = getPos(e)
+      lastPos.current = p
+      ctx.beginPath()
+      ctx.moveTo(p.x, p.y)
+    }
+
+    const move = (e) => {
+      if (!drawing.current) return
+      if (e.cancelable) e.preventDefault()
+      
+      const p = getPos(e)
+      
+      // Use requestAnimationFrame for smoother drawing
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => {
+        ctx.lineTo(p.x, p.y)
+        ctx.stroke()
+        lastPos.current = p
+      })
+    }
+
+    const stop = () => {
+      drawing.current = false
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+
+    canvas.addEventListener('mousedown', start)
+    canvas.addEventListener('mousemove', move)
+    canvas.addEventListener('mouseup', stop)
+    canvas.addEventListener('mouseleave', stop)
+    canvas.addEventListener('touchstart', start, { passive: false })
+    canvas.addEventListener('touchmove', move, { passive: false })
+    canvas.addEventListener('touchend', stop)
+
+    return () => {
+      canvas.removeEventListener('mousedown', start)
+      canvas.removeEventListener('mousemove', move)
+      canvas.removeEventListener('mouseup', stop)
+      canvas.removeEventListener('mouseleave', stop)
+      canvas.removeEventListener('touchstart', start)
+      canvas.removeEventListener('touchmove', move)
+      canvas.removeEventListener('touchend', stop)
+    }
   }, [primaryColor])
 
-  const pos = (e, canvas) => {
-    const r = canvas.getBoundingClientRect()
-    const src = e.touches ? e.touches[0] : e
-    return { x: src.clientX - r.left, y: src.clientY - r.top }
-  }
-
-  const start = e => { e.preventDefault(); drawing.current=true; const p=pos(e,canvasRef.current); const ctx=canvasRef.current.getContext('2d'); ctx.beginPath(); ctx.moveTo(p.x,p.y) }
-  const move  = e => { e.preventDefault(); if(!drawing.current)return; const p=pos(e,canvasRef.current); const ctx=canvasRef.current.getContext('2d'); ctx.lineTo(p.x,p.y); ctx.stroke() }
-  const end   = ()  => { drawing.current=false }
-
   const clear = () => {
-    const canvas=canvasRef.current
-    const ctx=canvas.getContext('2d')
-    ctx.clearRect(0,0,canvas.width,canvas.height)
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
   }
-  const save = () => onSave(canvasRef.current.toDataURL('image/png'))
+  
+  const save = () => {
+    if (!canvasRef.current) return
+    onSave(canvasRef.current.toDataURL('image/png'))
+  }
 
   return createPortal(
     <div className="overlay" onClick={onClose}>
-      <div className="modal" style={{maxWidth:500}} onClick={e=>e.stopPropagation()}>
+      <div className="modal" style={{ maxWidth: 500 }} onClick={e => e.stopPropagation()}>
         <div className="modal-head">
-          <div className="modal-title"><PenLine size={16} color="var(--cyan)"/>{title}</div>
-          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={14}/></button>
+          <div className="modal-title"><PenLine size={16} color="var(--cyan)" />{title}</div>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}><X size={14} /></button>
         </div>
         <div className="modal-body">
-          <p style={{fontSize:'.78rem',color:'var(--t3)',marginBottom:12,textAlign:'center'}}>
-            Desenhe sua assinatura abaixo
+          <p style={{ fontSize: '.78rem', color: 'var(--t3)', marginBottom: 12, textAlign: 'center' }}>
+            Desenhe sua assinatura abaixo (otimizado para touch)
           </p>
-          <div className="sig-canvas-wrap" style={{height:160}}>
-            <canvas ref={canvasRef} style={{width:'100%',height:'100%',display:'block',touchAction:'none'}}
-              onMouseDown={start} onMouseMove={move} onMouseUp={end} onMouseLeave={end}
-              onTouchStart={start} onTouchMove={move} onTouchEnd={end}/>
+          <div className="sig-canvas-wrap" style={{ height: 180 }}>
+            <canvas 
+              ref={canvasRef} 
+              style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none', background: 'var(--glass-2)', borderRadius: 12 }} 
+            />
           </div>
         </div>
         <div className="modal-foot">
-          <button className="btn btn-danger btn-sm" onClick={clear}><Trash2 size={12}/> Limpar</button>
-          <button className="btn btn-primary btn-sm" onClick={save}><Check size={12}/> Salvar</button>
+          <button className="btn btn-danger btn-sm" onClick={clear}><Trash2 size={12} /> Limpar</button>
+          <button className="btn btn-primary btn-sm" onClick={save}><Check size={12} /> Salvar</button>
         </div>
       </div>
     </div>,
